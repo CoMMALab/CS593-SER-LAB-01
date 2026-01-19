@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-TAG="andrejorsula/panda_ign_moveit2"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" &>/dev/null && pwd)"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+
+# Use project directory name as image tag (no hardcoded prefix)
+TAG="$(basename "${PROJECT_DIR}")"
 
 ## Forward custom volumes and environment variables
 CUSTOM_VOLUMES=()
@@ -29,18 +33,25 @@ if [ "${#}" -gt "0" ]; then
 fi
 
 ## GPU
-LS_HW_DISPLAY=$(lshw -C display 2> /dev/null | grep vendor)
+# Check for NVIDIA GPU and verify container toolkit is available
+LS_HW_DISPLAY=$(lshw -C display 2>/dev/null | grep vendor)
 if [[ ${LS_HW_DISPLAY^^} =~ NVIDIA ]]; then
-    # Enable GPU either via NVIDIA Container Toolkit or NVIDIA Docker (depending on Docker version)
-    if dpkg --compare-versions "$(docker version --format '{{.Server.Version}}')" gt "19.3"; then
-        GPU_OPT="--gpus all"
+    # Test if NVIDIA container toolkit is working
+    if docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi &>/dev/null; then
+        if dpkg --compare-versions "$(docker version --format '{{.Server.Version}}')" gt "19.3"; then
+            GPU_OPT="--gpus all"
+        else
+            GPU_OPT="--runtime nvidia"
+        fi
+        GPU_ENVS=(
+            NVIDIA_VISIBLE_DEVICES="all"
+            NVIDIA_DRIVER_CAPABILITIES="compute,utility,graphics"
+        )
+        echo -e "\033[0;32mNVIDIA GPU support enabled\033[0m"
     else
-        GPU_OPT="--runtime nvidia"
+        echo -e "\033[0;33mWarning: NVIDIA GPU detected but container toolkit not available. Running without GPU acceleration.\033[0m"
+        echo -e "\033[0;33mInstall nvidia-container-toolkit for GPU support.\033[0m"
     fi
-    GPU_ENVS=(
-        NVIDIA_VISIBLE_DEVICES="all"
-        NVIDIA_DRIVER_CAPABILITIES="compute,utility,graphics"
-    )
 fi
 
 ## GUI
@@ -79,9 +90,11 @@ CUSTOM_VOLUMES+=("/etc/localtime:/etc/localtime:ro")
 if [ -n "${ROS_DOMAIN_ID}" ]; then
     CUSTOM_ENVS+=("ROS_DOMAIN_ID=${ROS_DOMAIN_ID}")
 fi
-# Synchronize IGN_PARTITION with host
-if [ -n "${IGN_PARTITION}" ]; then
-    CUSTOM_ENVS+=("IGN_PARTITION=${IGN_PARTITION}")
+# Synchronize GZ_PARTITION with host (also check legacy IGN_PARTITION)
+if [ -n "${GZ_PARTITION}" ]; then
+    CUSTOM_ENVS+=("GZ_PARTITION=${GZ_PARTITION}")
+elif [ -n "${IGN_PARTITION}" ]; then
+    CUSTOM_ENVS+=("GZ_PARTITION=${IGN_PARTITION}")
 fi
 # Synchronize RMW configuration with host
 if [ -n "${RMW_IMPLEMENTATION}" ]; then

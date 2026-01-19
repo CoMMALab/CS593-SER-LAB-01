@@ -1,4 +1,4 @@
-ARG ROS_DISTRO=galactic
+ARG ROS_DISTRO=jazzy
 FROM ros:${ROS_DISTRO}-ros-base
 
 ### Use bash by default
@@ -12,17 +12,27 @@ ENV WS_INSTALL_DIR=${WS_DIR}/install
 ENV WS_LOG_DIR=${WS_DIR}/log
 WORKDIR ${WS_DIR}
 
-### Install Gazebo
-ARG IGNITION_VERSION=fortress
-ENV IGNITION_VERSION=${IGNITION_VERSION}
+### Install Gazebo and graphics libraries for GPU rendering
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-    ignition-${IGNITION_VERSION} && \
+    ros-${ROS_DISTRO}-ros-gz \
+    libglvnd0 \
+    libgl1 \
+    libglx0 \
+    libegl1 \
+    libxext6 \
+    libx11-6 \
+    libvulkan1 \
+    mesa-vulkan-drivers && \
     rm -rf /var/lib/apt/lists/*
 
-### Import and install dependencies, then build these dependencies (not panda_ign_moveit2 yet)
-COPY ./panda_ign_moveit2.repos ${WS_SRC_DIR}/panda_ign_moveit2/panda_ign_moveit2.repos
-RUN vcs import --shallow ${WS_SRC_DIR} < ${WS_SRC_DIR}/panda_ign_moveit2/panda_ign_moveit2.repos && \
+### NVIDIA environment variables for graphics
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
+
+### Import and install dependencies, then build these dependencies (not panda_gz_moveit2 yet)
+COPY ./panda_gz_moveit2.repos ${WS_SRC_DIR}/panda_gz_moveit2/panda_gz_moveit2.repos
+RUN vcs import --shallow ${WS_SRC_DIR} < ${WS_SRC_DIR}/panda_gz_moveit2/panda_gz_moveit2.repos && \
     rosdep update && \
     apt-get update && \
     rosdep install -y -r -i --rosdistro "${ROS_DISTRO}" --from-paths ${WS_SRC_DIR} && \
@@ -31,8 +41,8 @@ RUN vcs import --shallow ${WS_SRC_DIR} < ${WS_SRC_DIR}/panda_ign_moveit2/panda_i
     colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release" && \
     rm -rf ${WS_LOG_DIR}
 
-### Copy over the rest of panda_ign_moveit2, then install dependencies and build
-COPY ./ ${WS_SRC_DIR}/panda_ign_moveit2/
+### Copy over the rest of panda_gz_moveit2, then install dependencies and build
+COPY ./ ${WS_SRC_DIR}/panda_gz_moveit2/
 RUN rosdep update && \
     apt-get update && \
     rosdep install -y -r -i --rosdistro "${ROS_DISTRO}" --from-paths ${WS_SRC_DIR} && \

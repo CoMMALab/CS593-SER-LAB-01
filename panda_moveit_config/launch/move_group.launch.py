@@ -125,9 +125,11 @@ def generate_launch_description():
     }
 
     # Kinematics
-    kinematics = load_yaml(
-        moveit_config_package, path.join("config", "kinematics.yaml")
-    )
+    kinematics = {
+        "robot_description_kinematics": load_yaml(
+            moveit_config_package, path.join("config", "kinematics.yaml")
+        )
+    }
 
     # Joint limits
     joint_limits = {
@@ -144,22 +146,34 @@ def generate_launch_description():
     }
     servo_params["moveit_servo"].update({"use_gazebo": use_sim_time})
 
-    # Planning pipeline
-    planning_pipeline = {
-        "planning_pipelines": ["ompl"],
-        "default_planning_pipeline": "ompl",
-        "ompl": {
-            "planning_plugin": "ompl_interface/OMPLPlanner",
-            # TODO: Re-enable `default_planner_request_adapters/AddRuckigTrajectorySmoothing` once its issues are resolved
-            "request_adapters": "default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/ResolveConstraintFrames default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints",
-            # TODO: Reduce start_state_max_bounds_error once spawning with specific joint configuration is enabled
-            "start_state_max_bounds_error": 0.31416,
-        },
-    }
+    # Planning pipeline configuration for Jazzy MoveIt2
+    # Note: Jazzy uses "planning_plugins" (plural, as list) not "planning_plugin" (singular)
     _ompl_yaml = load_yaml(
         moveit_config_package, path.join("config", "ompl_planning.yaml")
     )
-    planning_pipeline["ompl"].update(_ompl_yaml)
+    ompl_planning_pipeline_config = {
+        "planning_plugins": ["ompl_interface/OMPLPlanner"],
+        "request_adapters": [
+            "default_planning_request_adapters/ResolveConstraintFrames",
+            "default_planning_request_adapters/ValidateWorkspaceBounds",
+            "default_planning_request_adapters/CheckStartStateBounds",
+            "default_planning_request_adapters/CheckStartStateCollision",
+        ],
+        "response_adapters": [
+            "default_planning_response_adapters/AddTimeOptimalParameterization",
+            "default_planning_response_adapters/ValidateSolution",
+            "default_planning_response_adapters/DisplayMotionPath",
+        ],
+        # TODO: Reduce start_state_max_bounds_error once spawning with specific joint configuration is enabled
+        "start_state_max_bounds_error": 0.31416,
+    }
+    ompl_planning_pipeline_config.update(_ompl_yaml)
+
+    planning_pipeline = {
+        "planning_pipelines": ["ompl"],
+        "default_planning_pipeline": "ompl",
+        "ompl": ompl_planning_pipeline_config,
+    }
 
     # Planning scene
     planning_scene_monitor_parameters = {
@@ -167,6 +181,8 @@ def generate_launch_description():
         "publish_geometry_updates": True,
         "publish_state_updates": True,
         "publish_transforms_updates": True,
+        "publish_robot_description": True,
+        "publish_robot_description_semantic": True,
     }
 
     # MoveIt controller manager
@@ -265,7 +281,7 @@ def generate_launch_description():
         # move_servo
         Node(
             package="moveit_servo",
-            executable="servo_node_main",
+            executable="servo_node",
             output="log",
             arguments=["--ros-args", "--log-level", log_level],
             parameters=[
@@ -299,6 +315,7 @@ def generate_launch_description():
                 kinematics,
                 planning_pipeline,
                 joint_limits,
+                planning_scene_monitor_parameters,
                 {"use_sim_time": use_sim_time},
             ],
             condition=IfCondition(enable_rviz),
@@ -419,8 +436,8 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         ),
         DeclareLaunchArgument(
             "ros2_control_plugin",
-            default_value="ign",
-            description="The ros2_control plugin that should be loaded for the manipulator ('fake', 'ign', 'real' or custom).",
+            default_value="gz",
+            description="The ros2_control plugin that should be loaded for the manipulator ('fake', 'gz', 'real' or custom).",
         ),
         DeclareLaunchArgument(
             "ros2_control_command_interface",
@@ -433,10 +450,10 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             default_value="false",
             description="Flag to preserve fixed joints and prevent lumping when generating SDF for Gazebo.",
         ),
-        # Servo
+        # Servo (disabled by default - Jazzy servo API has changed)
         DeclareLaunchArgument(
             "enable_servo",
-            default_value="true",
+            default_value="false",
             description="Flag to enable MoveIt2 Servo for manipulator.",
         ),
         # Miscellaneous

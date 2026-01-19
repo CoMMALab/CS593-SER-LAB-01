@@ -727,8 +727,8 @@
       </visual>
     </link>
     <static>false</static>
-    <plugin name='ign_ros2_control::IgnitionROS2ControlPlugin' filename='ign_ros2_control-system'>
-      <parameters>/home/andrej/ws/code/repos/panda_ign_moveit2/install/share/panda_moveit_config/config/controllers_effort.yaml</parameters>
+    <plugin name='gz_ros2_control::GazeboSimROS2ControlPlugin' filename='libgz_ros2_control-system.so'>
+      <parameters>$(find panda_moveit_config)/config/controllers_effort.yaml</parameters>
     </plugin>
   </model>
 </sdf>

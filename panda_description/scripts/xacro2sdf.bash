@@ -13,7 +13,7 @@ XACRO_ARGS=(
     collision_arm:=true
     collision_gripper:=true
     ros2_control:=true
-    ros2_control_plugin:=ign
+    ros2_control_plugin:=gz
     ros2_control_command_interface:=effort
     gazebo_preserve_fixed_joint:=false
 )
@@ -23,7 +23,7 @@ rm "${SDF_PATH}" 2>/dev/null
 
 # Process xacro into URDF, then convert URDF to SDF and edit the SDF to use relative paths for meshes
 xacro "${XACRO_PATH}" "${XACRO_ARGS[@]}" -o "${TMP_URDF_PATH}" &&
-ign sdf -p "${TMP_URDF_PATH}" | sed "s/model:\/\/panda_description\///g" >"${SDF_PATH}" &&
+gz sdf -p "${TMP_URDF_PATH}" | sed "s/model:\/\/panda_description\///g" >"${SDF_PATH}" &&
 echo "Created new ${SDF_PATH}"
 
 # Remove temporary URDF file

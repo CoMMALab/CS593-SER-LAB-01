@@ -1,5 +1,5 @@
 #!/usr/bin/env -S ros2 launch
-"""Example of planning with MoveIt2 and executing motions using fake ROS 2 controllers within RViz2"""
+"""Example of planning with MoveIt2 and executing motions using Gazebo ROS 2 controllers within RViz2"""
 
 from os import path
 from typing import List
@@ -22,23 +22,23 @@ def generate_launch_description() -> LaunchDescription:
     model = LaunchConfiguration("model")
     rviz_config = LaunchConfiguration("rviz_config")
     use_sim_time = LaunchConfiguration("use_sim_time")
-    ign_verbosity = LaunchConfiguration("ign_verbosity")
+    gz_verbosity = LaunchConfiguration("gz_verbosity")
     log_level = LaunchConfiguration("log_level")
 
     # List of included launch descriptions
     launch_descriptions = [
-        # Launch Ignition Gazebo
+        # Launch Gazebo
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution(
                     [
-                        FindPackageShare("ros_ign_gazebo"),
+                        FindPackageShare("ros_gz_sim"),
                         "launch",
-                        "ign_gazebo.launch.py",
+                        "gz_sim.launch.py",
                     ]
                 )
             ),
-            launch_arguments=[("ign_args", [world, " -r -v ", ign_verbosity])],
+            launch_arguments=[("gz_args", [world, " -r -v ", gz_verbosity])],
         ),
         # Launch move_group of MoveIt 2
         IncludeLaunchDescription(
@@ -52,7 +52,7 @@ def generate_launch_description() -> LaunchDescription:
                 )
             ),
             launch_arguments=[
-                ("ros2_control_plugin", "ign"),
+                ("ros2_control_plugin", "gz"),
                 ("ros2_control_command_interface", "effort"),
                 # TODO: Re-enable colligion geometry for manipulator arm once spawning with specific joint configuration is enabled
                 ("collision_arm", "false"),
@@ -65,21 +65,21 @@ def generate_launch_description() -> LaunchDescription:
 
     # List of nodes to be launched
     nodes = [
-        # ros_ign_gazebo_create
+        # ros_gz_sim_create
         Node(
-            package="ros_ign_gazebo",
+            package="ros_gz_sim",
             executable="create",
             output="log",
             arguments=["-file", model, "--ros-args", "--log-level", log_level],
             parameters=[{"use_sim_time": use_sim_time}],
         ),
-        # ros_ign_bridge (clock -> ROS 2)
+        # ros_gz_bridge (clock -> ROS 2)
         Node(
-            package="ros_ign_bridge",
+            package="ros_gz_bridge",
             executable="parameter_bridge",
             output="log",
             arguments=[
-                "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock",
+                "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
                 "--ros-args",
                 "--log-level",
                 log_level,
@@ -97,7 +97,7 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
     """
 
     return [
-        # World and model for Ignition Gazebo
+        # World and model for Gazebo
         DeclareLaunchArgument(
             "world",
             default_value="default.sdf",
@@ -124,9 +124,9 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             description="If true, use simulated clock.",
         ),
         DeclareLaunchArgument(
-            "ign_verbosity",
+            "gz_verbosity",
             default_value="3",
-            description="Verbosity level for Ignition Gazebo (0~4).",
+            description="Verbosity level for Gazebo (0~4).",
         ),
         DeclareLaunchArgument(
             "log_level",
