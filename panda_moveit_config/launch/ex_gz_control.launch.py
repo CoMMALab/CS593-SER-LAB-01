@@ -54,7 +54,7 @@ def generate_launch_description() -> LaunchDescription:
             launch_arguments=[
                 ("ros2_control_plugin", "gz"),
                 ("ros2_control_command_interface", "effort"),
-                # TODO: Re-enable colligion geometry for manipulator arm once spawning with specific joint configuration is enabled
+                # TODO: Re-enable collision geometry for manipulator arm once spawning with specific joint configuration is enabled
                 ("collision_arm", "false"),
                 ("rviz_config", rviz_config),
                 ("use_sim_time", use_sim_time),
@@ -65,7 +65,7 @@ def generate_launch_description() -> LaunchDescription:
 
     # List of nodes to be launched
     nodes = [
-        # ros_gz_sim_create
+        # ros_gz_sim_create (spawn the robot)
         Node(
             package="ros_gz_sim",
             executable="create",
@@ -86,6 +86,29 @@ def generate_launch_description() -> LaunchDescription:
             ],
             parameters=[{"use_sim_time": use_sim_time}],
         ),
+        # ros_gz_bridge (object poses -> ROS 2 TF)
+        Node(
+            package="ros_gz_bridge",
+            executable="parameter_bridge",
+            name="pose_bridge",
+            output="screen",
+            parameters=[
+                {"use_sim_time": use_sim_time},
+                {"config_file": path.join(
+                    get_package_share_directory("panda_moveit_config"),
+                    "config",
+                    "gz_bridge.yaml",
+                )},
+            ],
+        ),
+        # Scene publisher (adds Gazebo objects to MoveIt planning scene)
+        Node(
+            package="panda_moveit_config",
+            executable="scene_publisher.py",
+            name="scene_publisher",
+            output="screen",
+            parameters=[{"use_sim_time": use_sim_time}],
+        ),
     ]
 
     return LaunchDescription(declared_arguments + launch_descriptions + nodes)
@@ -100,7 +123,11 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         # World and model for Gazebo
         DeclareLaunchArgument(
             "world",
-            default_value="default.sdf",
+            default_value=path.join(
+                get_package_share_directory("panda_description"),
+                "worlds",
+                "tabletop.sdf",
+            ),
             description="Name or filepath of world to load.",
         ),
         DeclareLaunchArgument(

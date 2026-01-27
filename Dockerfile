@@ -23,7 +23,8 @@ RUN apt-get update && \
     libxext6 \
     libx11-6 \
     libvulkan1 \
-    mesa-vulkan-drivers && \
+    mesa-vulkan-drivers \
+    tmux && \
     rm -rf /var/lib/apt/lists/*
 
 ### NVIDIA environment variables for graphics

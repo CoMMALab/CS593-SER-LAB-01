@@ -11,7 +11,7 @@ ament_environment_hooks(
 )
 
 # Install directories
-install(DIRECTORY config launch panda panda/meshes rviz urdf DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY config launch panda panda/meshes rviz urdf worlds DESTINATION share/${PROJECT_NAME})
 
 # Setup the project
 ament_package()

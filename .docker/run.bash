@@ -118,6 +118,7 @@ DOCKER_RUN_CMD=(
     --ipc host
     --privileged
     --security-opt "seccomp=unconfined"
+    -v $(pwd):/root/ws/src/panda_gz_moveit2:rw
     "${GUI_VOLUMES[@]/#/"--volume "}"
     "${GUI_ENVS[@]/#/"--env "}"
     "${GPU_OPT}"
