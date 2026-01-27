@@ -1,6 +1,6 @@
 # panda_moveit_config
 
-MoveIt configuration for Franka Emika Panda.
+MoveIt 2 configuration for Franka Emika Panda (ROS 2 Jazzy).
 
 ## Instructions
 
@@ -28,12 +28,20 @@ To see if everything works in an isolated environment, try using [ex_fake_contro
 ros2 launch panda_moveit_config ex_fake_control.launch.py
 ```
 
-### ign_control
+### gz_control
 
-For example inside Gazebo, try using [ex_ign_control.launch.py](./launch/ex_ign_control.launch.py) script that allows planning motions with MoveIt 2 and executing them with simulated controllers.
+For simulation inside Gazebo Harmonic, use [ex_gz_control.launch.py](./launch/ex_gz_control.launch.py) that allows planning motions with MoveIt 2 and executing them with simulated controllers.
 
 ```bash
-ros2 launch panda_moveit_config ex_ign_control.launch.py
+ros2 launch panda_moveit_config ex_gz_control.launch.py
+```
+
+This launches a tabletop scene with manipulable objects (red box and blue cylinder) that can be dragged in Gazebo. The planning scene is automatically updated for collision avoidance.
+
+For systems without a GPU, use headless mode:
+
+```bash
+ros2 launch panda_moveit_config ex_gz_control.launch.py headless:=true
 ```
 
 ## Directory Structure
@@ -44,6 +52,7 @@ The following directory structure is utilised for this package.
 .
 ├── config/                            # [dir] Configuration files for MoveIt 2
     ├── controllers_*.yaml             # Configuration of ROS 2 controllers for different command interfaces
+    ├── gz_bridge.yaml                 # Configuration for ros_gz_bridge topics
     ├── joint_limits.yaml              # List of velocity and acceleration joint limits
     ├── kinematics.yaml                # Configuration for the kinematic solver
     ├── moveit_controller_manager.yaml # List of controllers with their type and action namespace for use with MoveIt 2
@@ -51,9 +60,12 @@ The following directory structure is utilised for this package.
     └── servo.yaml                     # Configuration for moveit_servo
 ├── launch/                            # [dir] ROS 2 launch scripts
     ├── ex_fake_control.launch.py      # Launch script virtual motion planning and execution inside RViz2
+    ├── ex_gz_control.launch.py        # Launch script for Gazebo simulation with MoveIt 2
     └── move_group.launch.py           # Launch script for configuring and setting up move_group of MoveIt 2
 ├── rviz/moveit.rviz                   # RViz2 config for motion planning with MoveIt 2
 ├── scripts/                           # [dir] Additional useful scripts
+    ├── move_object.py                 # Move objects in Gazebo and update planning scene
+    └── scene_publisher.py             # Sync Gazebo object poses to MoveIt planning scene
 ├── srdf/                              # [dir] SRDF description (xacros)
     ├── panda_arm.xacro                # Macro for SRDF portion of Franka Emika Panda arm
     ├── panda_gripper.xacro            # Macro for SRDF portion of Franka Emika Panda gripper

@@ -1,8 +1,8 @@
 # panda_gz_moveit2
 
-Franka Emika Panda manipulation with MoveIt 2 and Gazebo simulation.
+Franka Emika Panda manipulation with MoveIt 2 and Gazebo Harmonic simulation.
 
-Updated to work with ROS2 Jazzy.
+Updated to work with ROS 2 Jazzy and Gazebo Harmonic.
 
 ## Quick Start
 
@@ -24,11 +24,32 @@ Updated to work with ROS2 Jazzy.
 # MoveIt with fake controller (no simulation)
 ros2 launch panda_moveit_config ex_fake_control.launch.py
 
-# MoveIt with Gazebo simulation
+# MoveIt with Gazebo simulation (includes tabletop scene with objects)
 ros2 launch panda_moveit_config ex_gz_control.launch.py
 
 # Just Gazebo visualization
 ros2 launch panda_description view_gz.launch.py
+```
+
+## Tabletop Scene
+
+The Gazebo simulation includes a tabletop scene with:
+- A table in front of the robot
+- A red box (0.15m cube) at (0.4, 0.2, 0.495)
+- A blue cylinder (0.075m radius, 0.21m height) at (0.6, -0.2, 0.525)
+
+Objects can be dragged in Gazebo and their positions are automatically synchronized to the MoveIt planning scene for collision avoidance.
+
+### Moving Objects
+
+Objects can be moved programmatically:
+
+```bash
+# Move red_box to a new position
+ros2 run panda_moveit_config move_object.py red_box 0.5 0.0 0.495
+
+# Move blue_cylinder
+ros2 run panda_moveit_config move_object.py blue_cylinder 0.4 0.3 0.525
 ```
 
 ## Packages
@@ -41,7 +62,7 @@ ros2 launch panda_description view_gz.launch.py
 
 - Docker
 - X11 (for GUI)
-- NVIDIA Container Toolkit (for GPU acceleration)
+- NVIDIA Container Toolkit (for GPU acceleration, optional)
 
 ### Installing NVIDIA Container Toolkit
 
@@ -61,7 +82,18 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-Without GPU support, use software rendering (slower):
+### Running Without GPU
+
+For systems without an NVIDIA GPU, use software rendering:
+
 ```bash
-.docker/run.bash -e LIBGL_ALWAYS_SOFTWARE=1
+# Run with software rendering (Mesa llvmpipe)
+.docker/run.bash -s
+```
+
+Alternatively, run Gazebo in headless mode (no GUI, faster):
+
+```bash
+# Inside container
+ros2 launch panda_moveit_config ex_gz_control.launch.py headless:=true
 ```

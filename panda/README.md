@@ -1,6 +1,6 @@
 # panda
 
-Metapackage for Franka Emika Panda.
+Metapackage for Franka Emika Panda (ROS 2 Jazzy).
 
 ## Functionality
 
