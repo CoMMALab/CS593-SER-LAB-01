@@ -39,8 +39,8 @@ sudo systemctl restart docker
 Clone this repository and build the Docker image:
 
 ```bash
-git clone <repository-url> panda_gz_moveit2
-cd panda_gz_moveit2
+git clone https://github.com/CoMMALab/CS593-SER-LAB-01 lab01
+cd lab01
 .docker/build.bash
 ```
 
@@ -62,7 +62,6 @@ Build the ROS 2 workspace inside the container:
 colcon build --merge-install --symlink-install --cmake-args "-DCMAKE_BUILD_TYPE=Release"
 source install/setup.bash
 ```
-
 
 **Deliverable 1.3:** Based on the output of `colcon build`, how many packages are built as part of the project?
 
