@@ -171,9 +171,9 @@ The motion planner uses OMPL (Open Motion Planning Library) with the RRTConnect 
 
 **Deliverable 4.1:** After launching the simulation, answer the following questions using `ros2 topic list` and `ros2 topic info`:
 
-1. Run `ros2 topic list` in the other `tmux` session. What topic is published to so that MoveIt can query the planning scene? (Hint: you can cross-check `panda_moveit_config/scripts/scene_publisher.py`)
-2. Run `gz topic -e -t /world/tabletop_world/dynamic_pose/info`. What is the ID of the red box? What is its initial position and orientation? (Hint: try piping the output of `gz` to `grep`)
-3. What action server does MoveIt use for trajectory execution? (Hint: use `ros2 action list`)
+* Run `ros2 topic list` in the other `tmux` session. What topic is published to so that MoveIt can query the planning scene? (Hint: you can cross-check `panda_moveit_config/scripts/scene_publisher.py`)
+* Run `gz topic -e -t /world/tabletop_world/dynamic_pose/info`. What is the ID of the red box? What is its initial position and orientation? (Hint: try piping the output of `gz` to `grep`)
+* What action server does MoveIt use for trajectory execution? (Hint: use `ros2 action list`)
 
 ### Step 4.2: Collision Awareness
 
