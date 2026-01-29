@@ -82,8 +82,10 @@ GUI_ENVS=(
 )
 
 ## Additional volumes
-# Synchronize timezone with host
-CUSTOM_VOLUMES+=("/etc/localtime:/etc/localtime:ro")
+# Synchronize timezone with host (if available)
+if [ -f "/etc/localtime" ]; then
+    CUSTOM_VOLUMES+=("/etc/localtime:/etc/localtime:ro")
+fi
 
 ## Additional environment variables
 # Synchronize ROS_DOMAIN_ID with host
