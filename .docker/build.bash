@@ -13,8 +13,8 @@ realpath_portable() {
 SCRIPT_DIR="$(cd "$(dirname "$(realpath_portable "${BASH_SOURCE[0]}")")" &>/dev/null && pwd)"
 PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 
-# Use project directory name as image tag (no hardcoded prefix)
-TAG="$(basename "${PROJECT_DIR}")"
+# Fixed image tag
+TAG="panda_gz_moveit2"
 
 if [ "${#}" -gt "0" ]; then
     if [[ "${1}" != "-"* ]]; then

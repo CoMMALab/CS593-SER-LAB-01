@@ -14,12 +14,14 @@ realpath_portable() {
 SCRIPT_DIR="$(cd "$(dirname "$(realpath_portable "${BASH_SOURCE[0]}")")" &>/dev/null && pwd)"
 PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 
-# Use project directory name as image tag (no hardcoded prefix)
-TAG="$(basename "${PROJECT_DIR}")"
+# Fixed image tag
+TAG="panda_gz_moveit2"
 
 ## Forward custom volumes and environment variables
 CUSTOM_VOLUMES=()
 CUSTOM_ENVS=()
+GPU_OPT=()
+GPU_ENVS=()
 while getopts ":v:e:" opt; do
     case "${opt}" in
         v) CUSTOM_VOLUMES+=("${OPTARG}") ;;
@@ -52,9 +54,9 @@ if [[ "$(echo "${LS_HW_DISPLAY:-}" | tr '[:lower:]' '[:upper:]')" =~ NVIDIA ]]; 
     # Test if NVIDIA container toolkit is working
     if docker run --rm --gpus all nvidia/cuda:11.0.3-base-ubuntu20.04 nvidia-smi &>/dev/null; then
         if dpkg --compare-versions "$(docker version --format '{{.Server.Version}}')" gt "19.3"; then
-            GPU_OPT="--gpus all"
+            GPU_OPT=("--gpus" "all")
         else
-            GPU_OPT="--runtime nvidia"
+            GPU_OPT=("--runtime" "nvidia")
         fi
         GPU_ENVS=(
             NVIDIA_VISIBLE_DEVICES="all"
@@ -140,12 +142,18 @@ DOCKER_RUN_CMD=(
     --privileged
     --security-opt "seccomp=unconfined"
     -v "$(pwd):/root/ws/src/panda_gz_moveit2:rw"
-    "${GUI_VOLUMES[@]/#/"--volume "}"
-    "${GUI_ENVS[@]/#/"--env "}"
 )
+# Add GUI volumes
+for vol in "${GUI_VOLUMES[@]}"; do
+    DOCKER_RUN_CMD+=("--volume" "${vol}")
+done
+# Add GUI environment variables
+for env in "${GUI_ENVS[@]}"; do
+    DOCKER_RUN_CMD+=("--env" "${env}")
+done
 # Add GPU options only if set
-if [ -n "${GPU_OPT:-}" ]; then
-    DOCKER_RUN_CMD+=("${GPU_OPT}")
+if [ ${#GPU_OPT[@]} -gt 0 ]; then
+    DOCKER_RUN_CMD+=("${GPU_OPT[@]}")
 fi
 for env in "${GPU_ENVS[@]:-}"; do
     [ -n "${env}" ] && DOCKER_RUN_CMD+=("--env" "${env}")
@@ -159,7 +167,6 @@ done
 DOCKER_RUN_CMD+=("${TAG}")
 [ -n "${CMD:-}" ] && DOCKER_RUN_CMD+=("${CMD}")
 
-echo -e "\033[1;30m${DOCKER_RUN_CMD[*]}\033[0m" | xargs
+echo -e "\033[1;30m${DOCKER_RUN_CMD[*]}\033[0m"
 
-# shellcheck disable=SC2048
-exec ${DOCKER_RUN_CMD[*]}
+exec "${DOCKER_RUN_CMD[@]}"
