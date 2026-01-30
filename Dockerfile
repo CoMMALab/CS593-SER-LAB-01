@@ -12,7 +12,7 @@ ENV WS_INSTALL_DIR=${WS_DIR}/install
 ENV WS_LOG_DIR=${WS_DIR}/log
 WORKDIR ${WS_DIR}
 
-### Install Gazebo and graphics libraries for GPU rendering
+### Install Gazebo, graphics libraries, and VNC for remote display
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
     ros-${ROS_DISTRO}-ros-gz \
@@ -24,7 +24,11 @@ RUN apt-get update && \
     libx11-6 \
     libvulkan1 \
     mesa-vulkan-drivers \
-    tmux && \
+    tmux \
+    tigervnc-standalone-server \
+    tigervnc-tools \
+    openbox \
+    xterm && \
     rm -rf /var/lib/apt/lists/*
 
 ### NVIDIA environment variables for graphics
