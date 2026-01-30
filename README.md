@@ -203,6 +203,20 @@ Which planner would you choose for a time-critical application? Which for path q
 
 ## Troubleshooting
 
+### macOS / Apple Silicon
+
+Displaying GUI applications (RViz, Gazebo) from Docker on macOS requires XQuartz.
+
+**If windows don't appear or you get display errors:**
+
+1. Install XQuartz if not already installed: `brew install --cask xquartz`
+2. Log out and back in after installation
+3. Open XQuartz, go to **Preferences → Security**, enable **"Allow connections from network clients"**
+4. Restart XQuartz
+5. Run `xhost +localhost` before starting the container
+
+**Performance:** Gazebo uses software rendering on macOS (no GPU passthrough). Increase Docker Desktop memory to 8GB+ in Settings → Resources.
+
 ### Docker/GPU issues
 - Without NVIDIA toolkit, Gazebo will use software rendering (slower)
 - If GUI doesn't appear, ensure X11 forwarding is working: `xhost +local:docker`
